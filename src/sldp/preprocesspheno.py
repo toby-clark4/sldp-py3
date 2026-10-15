@@ -136,6 +136,13 @@ def _process_chromosome(
     print(len(snps), "snps in refpanel", len(snps.columns), "columns, including metadata")
 
     print("reconciling")
+    
+    # Check BETA/SE/Z not all artificially set to 1
+    if (sumstats["Z"].abs() == 1).all():
+        ValueError(
+            "Z column contains only +/-1 values so is not a true signed annotation."
+        )
+        
     snps = ga.reconciled_to(snps, sumstats, ["Z"], othercolnames=["N"], missing_val=np.nan)
     snps["typed"] = snps.Z.notnull()
     snps["ahat"] = snps.Z / np.sqrt(snps.N)
@@ -143,7 +150,7 @@ def _process_chromosome(
     snps["R_Winv_ahat_I"] = np.nan
     snps["Winv_ahat_h"] = np.nan
     snps["R_Winv_ahat_h"] = np.nan
-
+    
     for ldblock, _, meta, ind in refpanel.block_data(ldblocks, chrom, meta=snps):
         if meta is None:
             raise ValueError("phenotype preprocessing requires block metadata")
